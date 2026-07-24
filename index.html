@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROMA:// bate-papo ao vivo</title>
+<title>SecretChat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -441,8 +441,7 @@
 
   <!-- ================= ENTRY SCREEN ================= -->
   <div class="entry-wrap" id="entryScreen">
-    <div class="brand">ROMA://<span class="cursor"></span></div>
-    <div class="tag">bate-papo ao vivo · sem cadastro · sem servidor</div>
+    <div class="brand">SecretRomaChat 1.0<span class="cursor"></span></div>
 
     <div class="field">
       <label for="nickInput">seu apelido</label>
@@ -450,26 +449,19 @@
     </div>
 
     <div class="field">
-      <label for="roomInput">nome da sala</label>
-      <input id="roomInput" maxlength="40" placeholder="ex: geral" autocomplete="off">
-      <div class="chips" id="roomChips">
-        <div class="chip" data-room="geral">Geral</div>
-        <div class="chip" data-room="so-resenha">Só Resenha</div>
-        <div class="chip" data-room="cultura-pop">Cultura Pop</div>
-        <div class="chip" data-room="trampo-remoto">Trampo Remoto</div>
-        <div class="chip" data-room="madrugada">Madrugada</div>
-      </div>
-      <button type="button" class="secure-room-btn" id="secureRoomBtn">🔒 gerar código de sala seguro</button>
-      <div class="secure-hint">gera um código aleatório (crypto.getRandomValues) — só entra quem tiver o código</div>
+      <label for="roomInput">CÓDIGO DA SALA</label>
+      <input id="roomInput" maxlength="40" placeholder="ex: a2d2-23sd-e234d" autocomplete="off">
+      <button type="button" class="secure-room-btn" id="secureRoomBtn">Gerar Código</button>
     </div>
 
     <button class="enter-btn" id="enterBtn">Entrar no bate-papo</button>
     <div class="status-line" id="entryStatus"></div>
 
     <div class="disclaimer">
-      Sem cadastro, sem banco de dados: as mensagens existem só enquanto
-      houver gente conectada na sala. Quem cria a sala vira <b style="color:var(--amber)">admin ⭐</b>.
-      Se essa pessoa sair, a sala se encerra para o resto — é só criar de novo.
+      Chat seguro e criptografado, sem cadastro. Nenhuma mensagem é salva e nenhum histórico
+      fica guardado — a conversa existe só enquanto houver gente conectada na sala.
+      Quem cria a sala vira <b style="color:var(--amber)">admin ⭐</b> e pode encerrá-la a
+      qualquer momento; depois disso, só é possível voltar a conversar gerando um novo código.
     </div>
   </div>
 
@@ -557,7 +549,6 @@
   const roomInput = document.getElementById("roomInput");
   const enterBtn = document.getElementById("enterBtn");
   const entryStatus = document.getElementById("entryStatus");
-  const roomChips = document.getElementById("roomChips");
   const secureRoomBtn = document.getElementById("secureRoomBtn");
 
   const statusDot = document.getElementById("statusDot");
@@ -576,13 +567,6 @@
   const leaveModalText = document.getElementById("leaveModalText");
   const leaveCancelBtn = document.getElementById("leaveCancelBtn");
   const leaveConfirmBtn = document.getElementById("leaveConfirmBtn");
-
-  // ---------------- entry screen wiring ----------------
-  roomChips.addEventListener("click", (e)=>{
-    const chip = e.target.closest(".chip");
-    if(!chip) return;
-    roomInput.value = chip.textContent.trim();
-  });
 
   // pre-fill from URL (?sala=xxx&apelido=yyy) so people can share a link
   const params = new URLSearchParams(location.search);
@@ -627,7 +611,7 @@
     const nick = nickInput.value.trim();
     const room = roomInput.value.trim();
     if(!nick){ setEntryStatus("Digite um apelido para entrar.", "err"); nickInput.focus(); return; }
-    if(!room){ setEntryStatus("Digite o nome de uma sala.", "err"); roomInput.focus(); return; }
+    if(!room){ setEntryStatus("Gere um código de sala para entrar.", "err"); roomInput.focus(); return; }
     enterBtn.disabled = true;
     setEntryStatus("Conectando...", "");
     enterRoom(nick, room);
@@ -711,7 +695,7 @@
       appendSystem("Você entrou na sala.");
     }
     // não colocamos o nome/código da sala na URL: quem for entrar
-    // precisa saber o nome da sala por fora (combinado, não por link).
+    // precisa saber o código da sala por fora (combinado, não por link).
   }
 
   function setStatusDot(state){
@@ -895,8 +879,8 @@
 
   // ---------------- misc UI ----------------
   copyLinkBtn.addEventListener("click", ()=>{
-    // copia só o endereço do site (sem o nome/código da sala).
-    // o nome da sala deve ser combinado por fora, não indo junto no link.
+    // copia só o endereço do site (sem o código da sala).
+    // o código da sala deve ser combinado por fora, não indo junto no link.
     const url = new URL(location.href);
     url.search = "";
     navigator.clipboard.writeText(url.toString()).then(()=>{
@@ -980,7 +964,7 @@
     history.replaceState(null, "", url.toString());
 
     enterBtn.disabled = false;
-    setEntryStatus(message || "Você saiu da sala. Crie ou entre em outra quando quiser.", "ok");
+    setEntryStatus(message || "Você saiu da sala. Gere um novo código quando quiser conversar de novo.", "ok");
     roomInput.value = "";
     roomInput.focus();
   }
