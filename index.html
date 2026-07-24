@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROMA:// bate-papo ao vivo</title>
+<title>SecretChat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -441,8 +441,8 @@
 
   <!-- ================= ENTRY SCREEN ================= -->
   <div class="entry-wrap" id="entryScreen">
-    <div class="brand">SecretRomaChat 1.0<span class="cursor"></span></div>
-    <div class="tag">Bate-papo em tempo real criptografado</div>
+    <div class="brand">ROMA://<span class="cursor"></span></div>
+    <div class="tag">bate-papo ao vivo · sem cadastro · sem servidor</div>
 
     <div class="field">
       <label for="nickInput">seu apelido</label>
@@ -450,17 +450,18 @@
     </div>
 
     <div class="field">
-      <label for="roomInput">Código gerado abaixo</label>
-      <input id="roomInput" maxlength="40" placeholder="ex: it78-yupr-cs5f-qpmy" autocomplete="off">
-      <button type="button" class="secure-room-btn" id="secureRoomBtn">🔒 Gerar Código Criptografado</button>
-      <div class="secure-hint"></div>
+      <label for="roomInput">nome da sala</label>
+      <input id="roomInput" maxlength="40" placeholder="ex: geral" autocomplete="off">
+      </div>
+      <button type="button" class="secure-room-btn" id="secureRoomBtn">🔒 Gerar Código Criptrografado</button>
+      <div class="secure-hint">gera um código aleatório (crypto.getRandomValues) — só entra quem tiver o código</div>
     </div>
 
     <button class="enter-btn" id="enterBtn">Entrar no bate-papo</button>
     <div class="status-line" id="entryStatus"></div>
 
     <div class="disclaimer">
-      Sem cadastro, sem histórico de mensagens, as mensagens existem só enquanto
+      Sem cadastro, sem banco de dados: as mensagens existem só enquanto
       houver gente conectada na sala. Quem cria a sala vira <b style="color:var(--amber)">admin ⭐</b>.
       Se essa pessoa sair, a sala se encerra para o resto — é só criar de novo.
     </div>
