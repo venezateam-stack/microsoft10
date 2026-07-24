@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROMA:// bate-papo ao vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#0a0f0f;
+    --bg-panel:#0f1717;
+    --bg-panel-2:#131d1d;
+    --line:#1e2b2a;
+    --amber:#ffb000;
+    --amber-dim:#8a6104;
+    --green:#33ff99;
+    --green-dim:#1b7a52;
+    --text:#dfe9e6;
+    --text-dim:#6f8a84;
+    --danger:#ff5f56;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% -10%, rgba(255,176,0,0.06), transparent 40%),
+      radial-gradient(circle at 100% 110%, rgba(51,255,153,0.05), transparent 45%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family:var(--sans);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:16px;
+  }
+
+  /* ---------- Scanline / CRT flavor ---------- */
+  .crt::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.025) 0px,
+      rgba(255,255,255,0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+    z-index:999;
+  }
+
+  /* ================= ENTRY SCREEN ================= */
+  .entry-wrap{
+    width:100%;
+    max-width:480px;
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:32px 28px 28px;
+    box-shadow:0 0 0 1px rgba(0,0,0,0.4), 0 30px 60px -20px rgba(0,0,0,0.7);
+  }
+  .brand{
+    font-family:var(--mono);
+    font-weight:800;
+    font-size:26px;
+    letter-spacing:0.5px;
+    color:var(--amber);
+    display:flex;
+    align-items:baseline;
+    gap:2px;
+  }
+  .brand .cursor{
+    display:inline-block;
+    width:11px;height:20px;
+    background:var(--amber);
+    margin-left:4px;
+    animation:blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+  .tag{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:6px;
+    letter-spacing:0.5px;
+  }
+  .field{margin-top:22px;}
+  .field label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--green);
+    margin-bottom:7px;
+  }
+  .field input{
+    width:100%;
+    background:#08100f;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 13px;
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:15px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--amber);}
+  .field input::placeholder{color:#3d4f4b;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .chip{
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:6px 10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--text-dim);
+    cursor:pointer;
+    background:#0b1413;
+    transition:.15s;
+  }
+  .chip:hover{border-color:var(--green-dim);color:var(--green);}
+
+  .secure-room-btn{
+    margin-top:10px;
+    width:100%;
+    padding:10px;
+    border:1px dashed var(--green-dim);
+    border-radius:8px;
+    background:#0b1413;
+    color:var(--green);
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .secure-room-btn:hover{border-color:var(--green);background:#0d1c19;}
+  .secure-hint{
+    margin-top:6px;
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:var(--text-dim);
+    line-height:1.4;
+  }
+
+  .enter-btn{
+    margin-top:26px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:var(--amber);
+    color:#150e00;
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    text-transform:uppercase;
+    transition:filter .15s, transform .05s;
+  }
+  .enter-btn:hover{filter:brightness(1.08);}
+  .enter-btn:active{transform:scale(0.99);}
+  .enter-btn:disabled{opacity:0.5;cursor:wait;}
+
+  .status-line{
+    margin-top:14px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--text-dim);
+    min-height:16px;
+  }
+  .status-line.err{color:var(--danger);}
+  .status-line.ok{color:var(--green);}
+
+  .disclaimer{
+    margin-top:22px;
+    padding-top:16px;
+    border-top:1px dashed var(--line);
+    font-size:11.5px;
+    line-height:1.5;
+    color:var(--text-dim);
+  }
+
+  /* ================= CHAT SCREEN ================= */
+  .app{
+    display:none;
+    width:100%;
+    max-width:920px;
+    height:88vh;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 0 0 1px rgba(0,0,0,0.4), 0 30px 60px -20px rgba(0,0,0,0.7);
+  }
+  .app.active{display:flex;}
+  .chat-col{flex:1;display:flex;flex-direction:column;min-width:0;}
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--bg-panel-2);
+    gap:10px;
+  }
+  .topbar .room-title{
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:14px;
+    color:var(--amber);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+  }
+  .topbar .room-title span.name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);flex:none;}
+  .dot.online{background:var(--green);box-shadow:0 0 8px var(--green);}
+  .dot.connecting{background:var(--amber);animation:blink 0.7s steps(1) infinite;}
+
+  .topbar-actions{display:flex;gap:8px;align-items:center;}
+  .icon-btn{
+    background:#0b1413;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:11px;
+    padding:7px 10px;
+    border-radius:7px;
+    cursor:pointer;
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--green-dim);}
+  .icon-btn.danger{color:var(--danger);border-color:var(--amber-dim);}
+  .icon-btn.danger:hover{color:#fff;background:var(--danger);border-color:var(--danger);}
+
+  .messages{
+    flex:1;
+    overflow-y:auto;
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .messages::-webkit-scrollbar{width:8px;}
+  .messages::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+
+  .msg{max-width:78%;}
+  .msg .meta{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-dim);
+    margin-bottom:3px;
+    display:flex;
+    gap:6px;
+    align-items:center;
+  }
+  .msg .meta .nick{color:var(--green);font-weight:600;}
+  .msg.self .meta .nick{color:var(--amber);}
+  .msg .meta .badge{
+    font-size:10px;
+    color:var(--amber);
+  }
+  .msg .bubble{
+    background:var(--bg-panel-2);
+    border:1px solid var(--line);
+    padding:9px 12px;
+    border-radius:10px;
+    font-size:14.5px;
+    line-height:1.45;
+    word-wrap:break-word;
+    white-space:pre-wrap;
+  }
+  .msg.self{align-self:flex-end;}
+  .msg.self .bubble{background:#1a1206;border-color:var(--amber-dim);}
+
+  .msg.system{align-self:center;max-width:90%;}
+  .msg.system .bubble{
+    background:transparent;
+    border:none;
+    color:var(--text-dim);
+    font-family:var(--mono);
+    font-size:11.5px;
+    text-align:center;
+    padding:2px 8px;
+  }
+
+  .composer{
+    display:flex;
+    gap:10px;
+    padding:14px;
+    border-top:1px solid var(--line);
+    background:var(--bg-panel-2);
+  }
+  .composer input{
+    flex:1;
+    background:#08100f;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 13px;
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:14.5px;
+    outline:none;
+  }
+  .composer input:focus{border-color:var(--green-dim);}
+  .composer button{
+    background:var(--amber);
+    color:#150e00;
+    border:none;
+    border-radius:8px;
+    padding:0 18px;
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .composer button:hover{filter:brightness(1.08);}
+  .composer button:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---- sidebar (user list) ---- */
+  .sidebar{
+    width:210px;
+    flex:none;
+    border-left:1px solid var(--line);
+    background:var(--bg-panel-2);
+    display:flex;
+    flex-direction:column;
+  }
+  .sidebar-head{
+    padding:14px 16px 10px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    border-bottom:1px solid var(--line);
+  }
+  .sidebar-head b{color:var(--green);}
+  .user-list{flex:1;overflow-y:auto;padding:10px 10px;}
+  .user-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 8px;
+    border-radius:7px;
+    font-size:13px;
+    color:var(--text);
+  }
+  .user-item .udot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none;}
+  .user-item .star{color:var(--amber);font-size:11px;}
+  .user-item .you{color:var(--text-dim);font-size:11px;margin-left:auto;}
+
+  /* mobile sidebar toggle */
+  .sidebar-toggle{display:none;}
+
+  @media (max-width:700px){
+    .app{height:94vh;border-radius:10px;}
+    .sidebar{
+      position:absolute;
+      right:0;top:0;bottom:0;
+      transform:translateX(100%);
+      transition:transform .2s ease;
+      z-index:20;
+      box-shadow:-10px 0 30px rgba(0,0,0,0.5);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .app{position:relative;overflow:hidden;}
+    .sidebar-toggle{
+      display:inline-flex;
+    }
+    .msg{max-width:90%;}
+  }
+
+  /* ---- confirm-leave modal ---- */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(4,8,7,0.72);
+    backdrop-filter:blur(2px);
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    padding:16px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal-box{
+    width:100%;
+    max-width:340px;
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:22px 20px;
+    box-shadow:0 20px 50px -15px rgba(0,0,0,0.8);
+  }
+  .modal-box h3{
+    margin:0 0 8px;
+    font-family:var(--mono);
+    font-size:14px;
+    color:var(--amber);
+  }
+  .modal-box p{
+    margin:0 0 18px;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--text-dim);
+  }
+  .modal-actions{display:flex;gap:10px;}
+  .modal-actions button{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    font-family:var(--mono);
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .modal-cancel{background:#0b1413;border:1px solid var(--line);color:var(--text);}
+  .modal-cancel:hover{border-color:var(--green-dim);}
+  .modal-confirm{background:var(--danger);border:1px solid var(--danger);color:#1a0000;}
+  .modal-confirm:hover{filter:brightness(1.1);}
+</style>
+</head>
+<body class="crt">
+
+  <!-- ================= ENTRY SCREEN ================= -->
+  <div class="entry-wrap" id="entryScreen">
+    <div class="brand">ROMA://<span class="cursor"></span></div>
+    <div class="tag">bate-papo ao vivo · sem cadastro · sem servidor</div>
+
+    <div class="field">
+      <label for="nickInput">seu apelido</label>
+      <input id="nickInput" maxlength="24" placeholder="ex: viajante_23" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="roomInput">nome da sala</label>
+      <input id="roomInput" maxlength="40" placeholder="ex: geral" autocomplete="off">
+      <div class="chips" id="roomChips">
+        <div class="chip" data-room="geral">Geral</div>
+        <div class="chip" data-room="so-resenha">Só Resenha</div>
+        <div class="chip" data-room="cultura-pop">Cultura Pop</div>
+        <div class="chip" data-room="trampo-remoto">Trampo Remoto</div>
+        <div class="chip" data-room="madrugada">Madrugada</div>
+      </div>
+      <button type="button" class="secure-room-btn" id="secureRoomBtn">🔒 gerar código de sala seguro</button>
+      <div class="secure-hint">gera um código aleatório (crypto.getRandomValues) — só entra quem tiver o código</div>
+    </div>
+
+    <button class="enter-btn" id="enterBtn">Entrar no bate-papo</button>
+    <div class="status-line" id="entryStatus"></div>
+
+    <div class="disclaimer">
+      Sem cadastro, sem banco de dados: as mensagens existem só enquanto
+      houver gente conectada na sala. Quem cria a sala vira <b style="color:var(--amber)">admin ⭐</b>.
+      Se essa pessoa sair, a sala se encerra para o resto — é só criar de novo.
+    </div>
+  </div>
+
+  <!-- ================= CHAT SCREEN ================= -->
+  <div class="app" id="appScreen">
+    <div class="chat-col">
+      <div class="topbar">
+        <div class="room-title">
+          <span class="dot connecting" id="statusDot"></span>
+          <span class="name" id="roomTitle">sala</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="copyLinkBtn">copiar link</button>
+          <button class="icon-btn sidebar-toggle" id="sidebarToggle">pessoas</button>
+          <button class="icon-btn danger" id="leaveBtn" title="Sair da sala">sair</button>
+        </div>
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+      <div class="composer">
+        <input id="msgInput" placeholder="digite sua mensagem..." maxlength="500" autocomplete="off" disabled>
+        <button id="sendBtn" disabled>Enviar</button>
+      </div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-head"><b id="userCount">0</b> na sala</div>
+      <div class="user-list" id="userList"></div>
+    </div>
+  </div>
+
+  <!-- ================= CONFIRM LEAVE MODAL ================= -->
+  <div class="modal-overlay" id="leaveModal">
+    <div class="modal-box">
+      <h3 id="leaveModalTitle">Sair da sala?</h3>
+      <p id="leaveModalText">Você será desconectado e voltará para a tela inicial.</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="leaveCancelBtn">Cancelar</button>
+        <button class="modal-confirm" id="leaveConfirmBtn">Sair</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- state ----------------
+  let peer = null;
+  let isHost = false;
+  let hostConn = null;      // client -> host connection
+  let conns = [];           // host -> array of DataConnection to clients
+  let users = new Map();    // id -> {nick, admin}
+  let myId = null;
+  let nickname = "";
+  let roomId = "";
+  let roomLabel = "";
+
+  const PEER_OPTS = { debug: 0 };
+
+  // ---------------- helpers ----------------
+  function slug(s){
+    return (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"-")
+      .replace(/(^-|-$)/g,"") || "geral";
+  }
+
+  function escapeText(t){
+    // textContent is used everywhere for rendering, this is just a safety trim
+    return (t || "").toString().slice(0, 500);
+  }
+
+  function fmtTime(ts){
+    const d = new Date(ts);
+    return d.getHours().toString().padStart(2,"0") + ":" + d.getMinutes().toString().padStart(2,"0");
+  }
+
+  // ---------------- DOM refs ----------------
+  const entryScreen = document.getElementById("entryScreen");
+  const appScreen = document.getElementById("appScreen");
+  const nickInput = document.getElementById("nickInput");
+  const roomInput = document.getElementById("roomInput");
+  const enterBtn = document.getElementById("enterBtn");
+  const entryStatus = document.getElementById("entryStatus");
+  const roomChips = document.getElementById("roomChips");
+  const secureRoomBtn = document.getElementById("secureRoomBtn");
+
+  const statusDot = document.getElementById("statusDot");
+  const roomTitle = document.getElementById("roomTitle");
+  const messagesEl = document.getElementById("messages");
+  const msgInput = document.getElementById("msgInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const userListEl = document.getElementById("userList");
+  const userCountEl = document.getElementById("userCount");
+  const copyLinkBtn = document.getElementById("copyLinkBtn");
+  const sidebarToggle = document.getElementById("sidebarToggle");
+  const sidebar = document.getElementById("sidebar");
+  const leaveBtn = document.getElementById("leaveBtn");
+  const leaveModal = document.getElementById("leaveModal");
+  const leaveModalTitle = document.getElementById("leaveModalTitle");
+  const leaveModalText = document.getElementById("leaveModalText");
+  const leaveCancelBtn = document.getElementById("leaveCancelBtn");
+  const leaveConfirmBtn = document.getElementById("leaveConfirmBtn");
+
+  // ---------------- entry screen wiring ----------------
+  roomChips.addEventListener("click", (e)=>{
+    const chip = e.target.closest(".chip");
+    if(!chip) return;
+    roomInput.value = chip.textContent.trim();
+  });
+
+  // pre-fill from URL (?sala=xxx&apelido=yyy) so people can share a link
+  const params = new URLSearchParams(location.search);
+  if(params.get("sala")) roomInput.value = params.get("sala");
+  if(params.get("apelido")) nickInput.value = params.get("apelido");
+
+  function setEntryStatus(text, kind){
+    entryStatus.textContent = text || "";
+    entryStatus.className = "status-line" + (kind ? " " + kind : "");
+  }
+
+  // Gera um código de sala com alta entropia usando o gerador
+  // criptograficamente seguro do navegador (Web Crypto API),
+  // não Math.random() — cada código tem ~2^80 combinações possíveis.
+  function generateSecureRoomCode(){
+    const ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"; // sem l/o/0/1 pra evitar confusão visual
+    const GROUPS = 4, GROUP_LEN = 4;
+    const bytes = new Uint8Array(GROUPS * GROUP_LEN);
+    crypto.getRandomValues(bytes);
+    let out = [];
+    for(let g = 0; g < GROUPS; g++){
+      let chunk = "";
+      for(let i = 0; i < GROUP_LEN; i++){
+        chunk += ALPHABET[bytes[g * GROUP_LEN + i] % ALPHABET.length];
+      }
+      out.push(chunk);
+    }
+    return out.join("-");
+  }
+
+  secureRoomBtn.addEventListener("click", ()=>{
+    roomInput.value = generateSecureRoomCode();
+    roomInput.focus();
+  });
+
+  enterBtn.addEventListener("click", tryEnter);
+  [nickInput, roomInput].forEach(inp=>{
+    inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") tryEnter(); });
+  });
+
+  function tryEnter(){
+    const nick = nickInput.value.trim();
+    const room = roomInput.value.trim();
+    if(!nick){ setEntryStatus("Digite um apelido para entrar.", "err"); nickInput.focus(); return; }
+    if(!room){ setEntryStatus("Digite o nome de uma sala.", "err"); roomInput.focus(); return; }
+    enterBtn.disabled = true;
+    setEntryStatus("Conectando...", "");
+    enterRoom(nick, room);
+  }
+
+  // ---------------- entering a room ----------------
+  function enterRoom(nick, room){
+    nickname = nick;
+    roomLabel = room;
+    roomId = "papolive-" + slug(room);
+
+    const hostAttempt = new Peer(roomId, PEER_OPTS);
+
+    hostAttempt.on("open", (id)=>{
+      peer = hostAttempt;
+      isHost = true;
+      myId = id;
+      users.set(id, { nick: nickname, admin: true });
+      onEnteredRoom();
+      peer.on("connection", handleIncomingConnection);
+    });
+
+    hostAttempt.on("error", (err)=>{
+      if(err.type === "unavailable-id"){
+        try{ hostAttempt.destroy(); }catch(e){}
+        joinAsClient();
+      } else {
+        setEntryStatus("Não foi possível conectar (" + err.type + "). Tente novamente.", "err");
+        enterBtn.disabled = false;
+      }
+    });
+  }
+
+  function joinAsClient(){
+    const p = new Peer(PEER_OPTS);
+    peer = p;
+
+    p.on("open", (id)=>{
+      myId = id;
+      hostConn = p.connect(roomId, { reliable: true, metadata:{ nick: nickname } });
+
+      hostConn.on("open", ()=>{
+        hostConn.send({ type:"join", nick: nickname });
+        onEnteredRoom();
+      });
+
+      hostConn.on("data", handleClientData);
+
+      hostConn.on("close", ()=>{
+        resetState();
+        backToEntryScreen("A sala foi encerrada pelo admin ⭐. Você foi redirecionado para a tela inicial.");
+      });
+
+      hostConn.on("error", ()=>{
+        setEntryStatus("Erro ao conectar na sala.", "err");
+      });
+    });
+
+    p.on("error", (err)=>{
+      if(err.type === "peer-unavailable"){
+        setEntryStatus("Não achamos essa sala agora. Tente novamente em instantes.", "err");
+        enterBtn.disabled = false;
+      } else {
+        setEntryStatus("Erro de conexão (" + err.type + ").", "err");
+        enterBtn.disabled = false;
+      }
+    });
+  }
+
+  function onEnteredRoom(){
+    entryScreen.style.display = "none";
+    appScreen.classList.add("active");
+    roomTitle.textContent = roomLabel;
+    setStatusDot("on");
+    disableComposer(false);
+    msgInput.focus();
+    if(isHost){
+      renderUserList();
+      appendSystem("Sala criada. Você é o admin ⭐ desta sala.");
+    } else {
+      appendSystem("Você entrou na sala.");
+    }
+    // não colocamos o nome/código da sala na URL: quem for entrar
+    // precisa saber o nome da sala por fora (combinado, não por link).
+  }
+
+  function setStatusDot(state){
+    statusDot.className = "dot " + (state === "on" ? "online" : state === "connecting" ? "connecting" : "");
+  }
+
+  function disableComposer(disabled){
+    msgInput.disabled = disabled;
+    sendBtn.disabled = disabled;
+  }
+
+  // ---------------- HOST logic ----------------
+  function handleIncomingConnection(conn){
+    conn.on("data", (data)=>{
+      if(!data || typeof data !== "object") return;
+
+      if(data.type === "join"){
+        conns.push(conn);
+        const nick = escapeText(data.nick) || "anônimo";
+        users.set(conn.peer, { nick, admin:false });
+        renderUserList();
+        broadcastUserlist();
+        broadcastSystem(nick + " entrou na sala.");
+      }
+      else if(data.type === "chat"){
+        const u = users.get(conn.peer);
+        const nick = (u && u.nick) || "anônimo";
+        const msg = { type:"chat", id: conn.peer, nick, text: escapeText(data.text), admin:false, ts: Date.now() };
+        appendMessage(msg);
+        broadcast(msg);
+      }
+    });
+
+    conn.on("close", ()=>{
+      conns = conns.filter(c => c !== conn);
+      const u = users.get(conn.peer);
+      users.delete(conn.peer);
+      renderUserList();
+      broadcastUserlist();
+      if(u) broadcastSystem(u.nick + " saiu da sala.");
+    });
+  }
+
+  function broadcast(data, exceptId){
+    conns.forEach(c=>{
+      if(c.open && c.peer !== exceptId){
+        try{ c.send(data); }catch(e){}
+      }
+    });
+  }
+
+  function broadcastUserlist(){
+    const list = Array.from(users.entries()).map(([id,u])=>({ id, nick:u.nick, admin:!!u.admin }));
+    broadcast({ type:"userlist", users: list });
+  }
+
+  function broadcastSystem(text){
+    const msg = { type:"system", text, ts: Date.now() };
+    appendMessage(msg);
+    broadcast(msg);
+  }
+
+  // ---------------- CLIENT logic ----------------
+  function handleClientData(data){
+    if(!data || typeof data !== "object") return;
+    if(data.type === "chat"){
+      appendMessage(data);
+    } else if(data.type === "system"){
+      appendMessage(data);
+    } else if(data.type === "userlist"){
+      renderUserListFromRemote(data.users);
+    }
+  }
+
+  // ---------------- sending messages ----------------
+  function sendChat(){
+    const text = msgInput.value.trim();
+    if(!text) return;
+    msgInput.value = "";
+
+    if(isHost){
+      const msg = { type:"chat", id: myId, nick: nickname, text, admin:true, ts: Date.now() };
+      appendMessage(msg);
+      broadcast(msg);
+    } else if(hostConn && hostConn.open){
+      hostConn.send({ type:"chat", nick: nickname, text });
+      appendMessage({ type:"chat", id: myId, nick: nickname, text, admin:false, ts: Date.now() });
+    }
+  }
+
+  sendBtn.addEventListener("click", sendChat);
+  msgInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter") sendChat(); });
+
+  // ---------------- rendering ----------------
+  function appendMessage(msg){
+    const wrap = document.createElement("div");
+
+    if(msg.type === "system"){
+      wrap.className = "msg system";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = "· " + msg.text + " ·";
+      wrap.appendChild(bubble);
+    } else {
+      const isSelf = msg.id === myId;
+      wrap.className = "msg" + (isSelf ? " self" : "");
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const nickSpan = document.createElement("span");
+      nickSpan.className = "nick";
+      nickSpan.textContent = msg.nick;
+      meta.appendChild(nickSpan);
+
+      if(msg.admin){
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = "⭐ admin";
+        meta.appendChild(badge);
+      }
+
+      const time = document.createElement("span");
+      time.textContent = fmtTime(msg.ts || Date.now());
+      meta.appendChild(time);
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = msg.text;
+
+      wrap.appendChild(meta);
+      wrap.appendChild(bubble);
+    }
+
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function appendSystem(text){
+    appendMessage({ type:"system", text, ts: Date.now() });
+  }
+
+  function renderUserList(){
+    // host builds from local `users` map
+    const list = Array.from(users.entries()).map(([id,u])=>({ id, nick:u.nick, admin:!!u.admin }));
+    renderUserListFromRemote(list);
+  }
+
+  function renderUserListFromRemote(list){
+    userListEl.innerHTML = "";
+    userCountEl.textContent = list.length;
+    list.forEach(u=>{
+      const item = document.createElement("div");
+      item.className = "user-item";
+
+      const dot = document.createElement("span");
+      dot.className = "udot";
+      item.appendChild(dot);
+
+      if(u.admin){
+        const star = document.createElement("span");
+        star.className = "star";
+        star.textContent = "⭐";
+        item.appendChild(star);
+      }
+
+      const nickSpan = document.createElement("span");
+      nickSpan.textContent = u.nick;
+      item.appendChild(nickSpan);
+
+      if(u.id === myId){
+        const you = document.createElement("span");
+        you.className = "you";
+        you.textContent = "você";
+        item.appendChild(you);
+      }
+
+      userListEl.appendChild(item);
+    });
+  }
+
+  // ---------------- misc UI ----------------
+  copyLinkBtn.addEventListener("click", ()=>{
+    // copia só o endereço do site (sem o nome/código da sala).
+    // o nome da sala deve ser combinado por fora, não indo junto no link.
+    const url = new URL(location.href);
+    url.search = "";
+    navigator.clipboard.writeText(url.toString()).then(()=>{
+      copyLinkBtn.textContent = "copiado!";
+      setTimeout(()=>{ copyLinkBtn.textContent = "copiar link"; }, 1500);
+    }).catch(()=>{});
+  });
+
+  sidebarToggle.addEventListener("click", ()=>{
+    sidebar.classList.toggle("open");
+  });
+
+  // ---------------- leave room ----------------
+  function openLeaveModal(){
+    if(isHost){
+      leaveModalTitle.textContent = "Encerrar a sala?";
+      leaveModalText.textContent = "Você é o admin ⭐. Ao sair, a sala se encerra para todo mundo que estiver conectado.";
+    } else {
+      leaveModalTitle.textContent = "Sair da sala?";
+      leaveModalText.textContent = "Você será desconectado e voltará para a tela inicial.";
+    }
+    leaveModal.classList.add("active");
+  }
+
+  function closeLeaveModal(){
+    leaveModal.classList.remove("active");
+  }
+
+  function leaveRoom(){
+    // avisa os outros antes de desconectar, quando possível
+    try{
+      if(isHost){
+        broadcastSystem(nickname + " encerrou a sala.");
+      } else if(hostConn && hostConn.open){
+        hostConn.send({ type:"leave", nick: nickname });
+      }
+    }catch(e){}
+
+    // fecha conexões e destrói o peer
+    try{
+      conns.forEach(c=>{ try{ c.close(); }catch(e){} });
+    }catch(e){}
+    try{
+      if(hostConn) hostConn.close();
+    }catch(e){}
+    try{
+      if(peer) peer.destroy();
+    }catch(e){}
+
+    resetState();
+    backToEntryScreen();
+  }
+
+  function resetState(){
+    peer = null;
+    isHost = false;
+    hostConn = null;
+    conns = [];
+    users = new Map();
+    myId = null;
+    roomId = "";
+    roomLabel = "";
+  }
+
+  function backToEntryScreen(message){
+    // limpa a tela de chat
+    messagesEl.innerHTML = "";
+    userListEl.innerHTML = "";
+    userCountEl.textContent = "0";
+    sidebar.classList.remove("open");
+    disableComposer(true);
+    setStatusDot("off");
+
+    // esconde o app, mostra a entrada de novo
+    appScreen.classList.remove("active");
+    entryScreen.style.display = "";
+
+    // limpa o ?sala= da url pra não tentar reconectar em recarregamento
+    const url = new URL(location.href);
+    url.searchParams.delete("sala");
+    history.replaceState(null, "", url.toString());
+
+    enterBtn.disabled = false;
+    setEntryStatus(message || "Você saiu da sala. Crie ou entre em outra quando quiser.", "ok");
+    roomInput.value = "";
+    roomInput.focus();
+  }
+
+  leaveBtn.addEventListener("click", openLeaveModal);
+  leaveCancelBtn.addEventListener("click", closeLeaveModal);
+  leaveConfirmBtn.addEventListener("click", ()=>{
+    closeLeaveModal();
+    leaveRoom();
+  });
+  leaveModal.addEventListener("click", (e)=>{
+    if(e.target === leaveModal) closeLeaveModal();
+  });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && leaveModal.classList.contains("active")) closeLeaveModal();
+  });
+
+  window.addEventListener("beforeunload", ()=>{
+    try{ if(peer) peer.destroy(); }catch(e){}
+  });
+
+})();
+</script>
+</body>
+</html>
