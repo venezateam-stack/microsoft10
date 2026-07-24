@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecretChat</title>
+<title>ROMA:// bate-papo ao vivo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -452,8 +452,14 @@
     <div class="field">
       <label for="roomInput">nome da sala</label>
       <input id="roomInput" maxlength="40" placeholder="ex: geral" autocomplete="off">
+      <div class="chips" id="roomChips">
+        <div class="chip" data-room="geral">Geral</div>
+        <div class="chip" data-room="so-resenha">Só Resenha</div>
+        <div class="chip" data-room="cultura-pop">Cultura Pop</div>
+        <div class="chip" data-room="trampo-remoto">Trampo Remoto</div>
+        <div class="chip" data-room="madrugada">Madrugada</div>
       </div>
-      <button type="button" class="secure-room-btn" id="secureRoomBtn">🔒 Gerar Código Criptrografado</button>
+      <button type="button" class="secure-room-btn" id="secureRoomBtn">🔒 gerar código de sala seguro</button>
       <div class="secure-hint">gera um código aleatório (crypto.getRandomValues) — só entra quem tiver o código</div>
     </div>
 
